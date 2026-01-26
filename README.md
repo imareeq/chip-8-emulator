@@ -1,0 +1,1 @@
+This is my attempt at creating a chip-8 emulator in C++. TODO: write better docs here.
