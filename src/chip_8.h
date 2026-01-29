@@ -1,11 +1,13 @@
 #include <array>
 #include <cstdint>
+#include <random>
 #include <string>
 #include <vector>
 
 namespace c8 {
 class chip_8 {
  private:
+  static constexpr uint8_t SPRITE_WIDTH = 8;
   static constexpr uint8_t VF_ADDRESS = 0xF;
   static constexpr uint8_t NUM_REGISTERS = 16;
   static constexpr uint8_t STACK_SIZE = 16;
@@ -13,16 +15,21 @@ class chip_8 {
   static constexpr uint8_t DISPLAY_HEIGHT = 32;
   static constexpr uint8_t DISPLAY_WIDTH = 64;
   static constexpr uint8_t FONTSET_SIZE = 80;
+  static constexpr uint8_t FONTSET_START_ADDRESS = 0x50;
   static constexpr uint8_t REGISTER_MAX_VALUE = 255;
   static constexpr uint16_t ROM_START_ADDRESS = 0x200;
   static constexpr uint16_t MEMORY_BYTES = 4096;
+  static constexpr uint32_t PIXEL_ON_VAL = 0xFFFFFFFF;
 
+  static constexpr uint8_t LSB_MASK = 0x1;
+  static constexpr uint8_t MSB_MASK = 0x80;
   static constexpr uint8_t VY_SHIFT = 4;
   static constexpr uint8_t VX_SHIFT = 8;
+  static constexpr uint16_t N_MASK = 0x000F;
+  static constexpr uint16_t NN_MASK = 0x00FF;
   static constexpr uint16_t NNN_MASK = 0x0FFF;
   static constexpr uint16_t VX_MASK = 0x0F00;
   static constexpr uint16_t VY_MASK = 0x00F0;
-  static constexpr uint16_t NN_MASK = 0x00FF;
 
   std::array<uint8_t, NUM_REGISTERS> registers{};
   std::array<uint8_t, MEMORY_BYTES> memory{};
@@ -36,6 +43,28 @@ class chip_8 {
   uint16_t index_register{};
   uint16_t program_counter{};
   uint16_t opcode{};
+
+  std::default_random_engine random_generator;
+  std::uniform_int_distribution<uint8_t> random_byte;
+
+  std::array<uint8_t, FONTSET_SIZE> fontset = {
+      0xF0, 0x90, 0x90, 0x90, 0xF0,  // 0
+      0x20, 0x60, 0x20, 0x20, 0x70,  // 1
+      0xF0, 0x10, 0xF0, 0x80, 0xF0,  // 2
+      0xF0, 0x10, 0xF0, 0x10, 0xF0,  // 3
+      0x90, 0x90, 0xF0, 0x10, 0x10,  // 4
+      0xF0, 0x80, 0xF0, 0x10, 0xF0,  // 5
+      0xF0, 0x80, 0xF0, 0x90, 0xF0,  // 6
+      0xF0, 0x10, 0x20, 0x40, 0x40,  // 7
+      0xF0, 0x90, 0xF0, 0x90, 0xF0,  // 8
+      0xF0, 0x90, 0xF0, 0x10, 0xF0,  // 9
+      0xF0, 0x90, 0xF0, 0x90, 0x90,  // A
+      0xE0, 0x90, 0xE0, 0x90, 0xE0,  // B
+      0xF0, 0x80, 0x80, 0x80, 0xF0,  // C
+      0xE0, 0x90, 0x90, 0x90, 0xE0,  // D
+      0xF0, 0x80, 0xF0, 0x80, 0xF0,  // E
+      0xF0, 0x80, 0xF0, 0x80, 0x80   // F
+  };
 
  public:
   auto load_rom(const std::string file_path) -> void;
