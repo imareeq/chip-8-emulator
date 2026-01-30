@@ -43,18 +43,8 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT "-fsanitize=address,undefined")
 set(CMAKE_CXX_EXE_LINKER_FLAGS_DEBUG_INIT "-fsanitize=address,undefined")
 set(CMAKE_CXX_EXE_LINKER_FLAGS_RELWITHDEBINFO_INIT "-fsanitize=address,undefined")
 
-include(FetchContent)
-FetchContent_Declare(
-    Catch2
-    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-    GIT_TAG v3.12.0
-)
-FetchContent_MakeAvailable(Catch2)
-
-enable_testing()
-
-add_library(chip_8 src/chip_8.h src/chip_8.cpp)
+add_library(chip_8 src/chip_8.h src/chip_8.cpp src/platform.h src/platform.cpp)
 target_include_directories(chip_8 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-add_executable(chip8_tests src/chip_8.test.cpp)
-target_link_libraries(chip8_tests PRIVATE chip_8 Catch2::Catch2WithMain)
+add_executable(chip8_emulator src/main.cpp)
+target_link_libraries(chip8_emulator PRIVATE chip_8)
