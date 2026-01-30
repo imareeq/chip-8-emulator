@@ -25,11 +25,13 @@ class chip_8 {
   static constexpr uint8_t MSB_MASK = 0x80;
   static constexpr uint8_t VY_SHIFT = 4;
   static constexpr uint8_t VX_SHIFT = 8;
+  static constexpr uint8_t OPCODE_SHIFT = 12;
   static constexpr uint16_t N_MASK = 0x000F;
   static constexpr uint16_t NN_MASK = 0x00FF;
   static constexpr uint16_t NNN_MASK = 0x0FFF;
   static constexpr uint16_t VX_MASK = 0x0F00;
   static constexpr uint16_t VY_MASK = 0x00F0;
+  static constexpr uint16_t OPCODE_MASK = 0xF000;
 
   std::array<uint8_t, NUM_REGISTERS> registers{};
   std::array<uint8_t, MEMORY_BYTES> memory{};
@@ -41,11 +43,11 @@ class chip_8 {
   uint8_t delay_timer{};
   uint8_t sound_timer{};
   uint16_t index_register{};
-  uint16_t program_counter{};
+  uint16_t program_counter{ROM_START_ADDRESS};
   uint16_t opcode{};
 
   std::default_random_engine random_generator;
-  std::uniform_int_distribution<uint8_t> random_byte;
+  std::uniform_int_distribution<unsigned int> random_byte;
 
   std::array<uint8_t, FONTSET_SIZE> fontset = {
       0xF0, 0x90, 0x90, 0x90, 0xF0,  // 0
@@ -66,15 +68,34 @@ class chip_8 {
       0xF0, 0x80, 0xF0, 0x80, 0x80   // F
   };
 
+  using chip_8_func = void (chip_8::*)();
+  std::array<chip_8_func, 0xF + 1> opcode_table;
+  std::array<chip_8_func, 0xE + 1> opcode_table_0;
+  std::array<chip_8_func, 0xE + 1> opcode_table_8;
+  std::array<chip_8_func, 0xE + 1> opcode_table_E;
+  std::array<chip_8_func, 0x65 + 1> opcode_table_F;
+
  public:
+  chip_8();
+
   auto load_rom(const std::string file_path) -> void;
+  auto cycle() -> void;
+
+  inline auto table_0() -> void { std::invoke(opcode_table_0[opcode & N_MASK], this); }
+
+  inline auto table_8() -> void { std::invoke(opcode_table_8[opcode & N_MASK], this); }
+
+  inline auto table_E() -> void { std::invoke(opcode_table_E[opcode & N_MASK], this); }
+
+  inline auto table_F() -> void { std::invoke(opcode_table_F[opcode & NN_MASK], this); }
+
+  inline auto opcode_null() -> void {}
 
   /*
     op codes docs at:
     https://github.com/trapexit/chip-8_documentation
   */
 
-  auto op_001N() -> void;  // EXIT N
   auto op_00E0() -> void;  // CLS
   auto op_00EE() -> void;  // RET
   auto op_0NNN() -> void;  // CALL NNN

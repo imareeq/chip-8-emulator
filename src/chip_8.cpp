@@ -1,9 +1,72 @@
 #include "chip_8.h"
 
+#include <chrono>
 #include <fstream>
 #include <ranges>
 
 namespace c8 {
+
+chip_8::chip_8()
+    : random_generator(static_cast<unsigned int>(std::chrono::system_clock::now().time_since_epoch().count())),
+      random_byte(0u, 255u) {
+  for (const auto& index : std::views::iota(0u, FONTSET_SIZE)) {
+    memory[FONTSET_START_ADDRESS + index] = fontset[index];
+  }
+
+  opcode_table[0x0] = &chip_8::table_0;
+  opcode_table[0x1] = &chip_8::op_1NNN;
+  opcode_table[0x2] = &chip_8::op_2NNN;
+  opcode_table[0x3] = &chip_8::op_3XNN;
+  opcode_table[0x4] = &chip_8::op_4XNN;
+  opcode_table[0x5] = &chip_8::op_5XY0;
+  opcode_table[0x6] = &chip_8::op_6XNN;
+  opcode_table[0x7] = &chip_8::op_7XNN;
+  opcode_table[0x8] = &chip_8::table_8;
+  opcode_table[0x9] = &chip_8::op_9XY0;
+  opcode_table[0xA] = &chip_8::op_ANNN;
+  opcode_table[0xB] = &chip_8::op_BNNN;
+  opcode_table[0xC] = &chip_8::op_CXNN;
+  opcode_table[0xD] = &chip_8::op_DXYN;
+  opcode_table[0xE] = &chip_8::table_E;
+  opcode_table[0xF] = &chip_8::table_F;
+
+  for (const auto& index : std::views::iota(0u, 0xEu + 1u)) {
+    opcode_table_0[index] = &chip_8::opcode_null;
+    opcode_table_8[index] = &chip_8::opcode_null;
+    opcode_table_E[index] = &chip_8::opcode_null;
+  }
+
+  opcode_table_0[0x0] = &chip_8::op_00E0;
+  opcode_table_0[0xE] = &chip_8::op_00EE;
+
+  opcode_table_8[0x0] = &chip_8::op_8XY0;
+  opcode_table_8[0x1] = &chip_8::op_8XY1;
+  opcode_table_8[0x2] = &chip_8::op_8XY2;
+  opcode_table_8[0x3] = &chip_8::op_8XY3;
+  opcode_table_8[0x4] = &chip_8::op_8XY4;
+  opcode_table_8[0x5] = &chip_8::op_8XY5;
+  opcode_table_8[0x6] = &chip_8::op_8XY6;
+  opcode_table_8[0x7] = &chip_8::op_8XY7;
+  opcode_table_8[0xE] = &chip_8::op_8XYE;
+
+  opcode_table_E[0x1] = &chip_8::op_EXA1;
+  opcode_table_E[0xE] = &chip_8::op_EX9E;
+
+  for (const auto& index : std::views::iota(0u, 0x65u + 1u)) {
+    opcode_table_F[index] = &chip_8::opcode_null;
+  }
+
+  opcode_table_F[0x07] = &chip_8::op_FX07;
+  opcode_table_F[0x0A] = &chip_8::op_FX0A;
+  opcode_table_F[0x15] = &chip_8::op_FX15;
+  opcode_table_F[0x18] = &chip_8::op_FX18;
+  opcode_table_F[0x1E] = &chip_8::op_FX1E;
+  opcode_table_F[0x29] = &chip_8::op_FX29;
+  opcode_table_F[0x33] = &chip_8::op_FX33;
+  opcode_table_F[0x55] = &chip_8::op_FX55;
+  opcode_table_F[0x65] = &chip_8::op_FX65;
+}
+
 auto chip_8::load_rom(const std::string file_path) -> void {
   std::ifstream file(file_path, std::ios::binary | std::ios::ate);
 
@@ -16,38 +79,36 @@ auto chip_8::load_rom(const std::string file_path) -> void {
     file.read(buffer.data(), size);
     file.close();
 
-    for (auto i : std::views::iota(0, size)) {
+    for (const auto& i : std::views::iota(0, size)) {
       memory[ROM_START_ADDRESS + i] = buffer[i];
     }
   } else {
-    // TODO: maybe enumerate the opcodes or something.
     memory[ROM_START_ADDRESS] = 0x00;
     memory[ROM_START_ADDRESS + 1] = 0xEE;
   }
 }
 
+auto chip_8::cycle() -> void {
+  opcode = (memory[program_counter] << 8u) | memory[program_counter + 1];
+  program_counter += 2;
+
+  std::invoke(opcode_table[(opcode & OPCODE_MASK) >> OPCODE_SHIFT], this);
+
+  if (delay_timer > 0) --delay_timer;
+  if (sound_timer > 0) --sound_timer;
+}
+
 /* ========== OP CODES ========== */
-auto chip_8::op_001N() -> void {
-  // TODO: implement when program loop is done
-  return;
-}
+auto chip_8::op_00E0() -> void { display_memory.fill(0); }
 
-auto chip_8::op_00E0() -> void {
-  display_memory.fill(0);
-}
-
-auto chip_8::op_00EE() -> void {
-  program_counter = stack[--pointer];
-}
+auto chip_8::op_00EE() -> void { program_counter = stack[--pointer]; }
 
 auto chip_8::op_0NNN() -> void {
   // skipped according to:
   // https://tobiasvl.github.io/blog/write-a-chip-8-emulator/#:~:text=0NNN%3A%20Execute%20machine%20language%20routinePermalink,of%20those%20computers%2C%20skip%20this%20one.
 }
 
-auto chip_8::op_1NNN() -> void {
-  program_counter = opcode & NNN_MASK;
-}
+auto chip_8::op_1NNN() -> void { program_counter = opcode & NNN_MASK; }
 
 auto chip_8::op_2NNN() -> void {
   stack[pointer++] = program_counter;
@@ -201,17 +262,19 @@ auto chip_8::op_DXYN() -> void {
 
   registers[VF_ADDRESS] = 0;
 
-  for (auto row : std::views::iota(0u, height)) {
+  for (const auto& row : std::views::iota(0u, height)) {
     const auto sprite_byte = memory[index_register + row];
-    for (auto col : std::views::iota(0u, SPRITE_WIDTH)) {
+    for (const auto& col : std::views::iota(0u, SPRITE_WIDTH)) {
       const uint8_t sprite_pixel = sprite_byte & (MSB_MASK >> col);
       auto& screen_pixel = display_memory[(y_pos + row) * DISPLAY_WIDTH + (x_pos + col)];
 
-      if (screen_pixel == PIXEL_ON_VAL) {
-        registers[VF_ADDRESS] = 1;
-      }
+      if (sprite_pixel) {
+        if (screen_pixel == PIXEL_ON_VAL) {
+          registers[VF_ADDRESS] = 1;
+        }
 
-      screen_pixel ^= PIXEL_ON_VAL;
+        screen_pixel ^= PIXEL_ON_VAL;
+      }
     }
   }
 }
@@ -242,9 +305,9 @@ auto chip_8::op_FX07() -> void {
 auto chip_8::op_FX0A() -> void {
   const uint8_t VX = (opcode & VX_MASK) >> VX_SHIFT;
 
-  for (const auto index : std::views::iota(0u, 16u)) {
+  for (const auto& index : std::views::iota(0u, 16u)) {
     if (input_keys[index]) {
-      registers[VX] = index;
+      registers[VX] = static_cast<uint8_t>(index);
       return;
     }
   }
@@ -290,7 +353,7 @@ auto chip_8::op_FX33() -> void {
 auto chip_8::op_FX55() -> void {
   const uint8_t VX = (opcode & VX_MASK) >> VX_SHIFT;
 
-  for (auto i : std::views::iota(0u, VX + 1u)) {
+  for (const auto& i : std::views::iota(0u, VX + 1u)) {
     memory[index_register + i] = registers[i];
   }
 }
@@ -298,7 +361,7 @@ auto chip_8::op_FX55() -> void {
 auto chip_8::op_FX65() -> void {
   const uint8_t VX = (opcode & VX_MASK) >> VX_SHIFT;
 
-  for (auto i : std::views::iota(0u, VX + 1u)) {
+  for (const auto& i : std::views::iota(0u, VX + 1u)) {
     registers[i] = memory[index_register + i];
   }
 }
