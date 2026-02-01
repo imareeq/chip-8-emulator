@@ -1,11 +1,12 @@
 #include <array>
 #include <cstdint>
 #include <random>
+#include <span>
 #include <string>
 #include <vector>
 
 namespace c8 {
-class chip_8 {
+class Chip_8 {
  private:
   static constexpr uint8_t SPRITE_WIDTH = 8;
   static constexpr uint8_t VF_ADDRESS = 0xF;
@@ -68,27 +69,32 @@ class chip_8 {
       0xF0, 0x80, 0xF0, 0x80, 0x80   // F
   };
 
-  using chip_8_func = void (chip_8::*)();
+  using chip_8_func = void (Chip_8::*)();
   std::array<chip_8_func, 0xF + 1> opcode_table;
   std::array<chip_8_func, 0xE + 1> opcode_table_0;
   std::array<chip_8_func, 0xE + 1> opcode_table_8;
   std::array<chip_8_func, 0xE + 1> opcode_table_E;
   std::array<chip_8_func, 0x65 + 1> opcode_table_F;
 
+  [[nodiscard]] auto inline get_vx() const -> uint8_t { return static_cast<uint8_t>((opcode & VX_MASK) >> VX_SHIFT); }
+  [[nodiscard]] auto inline get_vy() const -> uint8_t { return static_cast<uint8_t>((opcode & VY_MASK) >> VY_SHIFT); }
+  [[nodiscard]] auto inline get_n() const -> uint8_t { return static_cast<uint8_t>(opcode & N_MASK); }
+  [[nodiscard]] auto inline get_nn() const -> uint8_t { return static_cast<uint8_t>(opcode & NN_MASK); }
+  [[nodiscard]] auto inline get_nnn() const -> uint16_t { return static_cast<uint16_t>(opcode & NNN_MASK); }
+
  public:
-  chip_8();
+  Chip_8();
 
   auto load_rom(const std::string file_path) -> void;
   auto cycle() -> void;
 
+  [[nodiscard]] auto inline get_display_memory() const -> std::span<const uint32_t> { return display_memory; }
+  auto inline enable_input_key(size_t index, bool is_enabled) -> void { input_keys[index] = is_enabled; }
+
   inline auto table_0() -> void { std::invoke(opcode_table_0[opcode & N_MASK], this); }
-
   inline auto table_8() -> void { std::invoke(opcode_table_8[opcode & N_MASK], this); }
-
   inline auto table_E() -> void { std::invoke(opcode_table_E[opcode & N_MASK], this); }
-
   inline auto table_F() -> void { std::invoke(opcode_table_F[opcode & NN_MASK], this); }
-
   inline auto opcode_null() -> void {}
 
   /*

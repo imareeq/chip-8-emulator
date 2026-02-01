@@ -43,7 +43,7 @@ include(FetchContent)
 FetchContent_Declare(
     SDL3
     GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-    GIT_TAG release-3.4.0
+    GIT_TAG origin/main
 )
 
 FetchContent_MakeAvailable(SDL3)
@@ -53,7 +53,7 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT "-fsanitize=address,undefined")
 set(CMAKE_CXX_EXE_LINKER_FLAGS_DEBUG_INIT "-fsanitize=address,undefined")
 set(CMAKE_CXX_EXE_LINKER_FLAGS_RELWITHDEBINFO_INIT "-fsanitize=address,undefined")
 
-add_library(chip_8 src/chip_8.h src/chip_8.cpp src/platform.h src/platform.cpp)
+add_library(chip_8 src/chip_8.hpp src/chip_8.cpp src/platform.hpp src/platform.cpp)
 target_link_libraries(chip_8 PUBLIC SDL3::SDL3)
 target_include_directories(chip_8 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 

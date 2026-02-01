@@ -4,7 +4,9 @@
 #include <span>
 #include <string>
 
-class platform {
+#include "chip_8.h"
+
+class Platform {
  private:
   struct sdl_initialiser {
     sdl_initialiser() { SDL_Init(SDL_INIT_VIDEO); }
@@ -25,8 +27,8 @@ class platform {
  public:
   enum class process_status { Continue, Quit };
 
-  platform(std::string title, int window_height, int window_width, int texture_height, int texture_width);
+  Platform(std::string title, int window_height, int window_width, int texture_height, int texture_width);
 
-  auto update(const std::span<uint32_t> buffer, int pitch) -> void;
-  auto process_input(std::span<uint8_t> input_keys) const -> process_status;
+  auto update(const std::span<const uint32_t> buffer, int pitch) -> void;
+  auto process_input(c8::Chip_8& chip_8) const -> process_status;
 };
