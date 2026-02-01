@@ -7,8 +7,8 @@
 namespace c8 {
 
 chip_8::chip_8()
-    : random_generator(static_cast<unsigned int>(std::chrono::system_clock::now().time_since_epoch().count())),
-      random_byte(0u, 255u) {
+    : random_generator(static_cast<unsigned int>(std::chrono::system_clock::now().time_since_epoch().count()))
+    , random_byte(0u, 255u) {
   for (const auto& index : std::views::iota(0u, FONTSET_SIZE)) {
     memory[FONTSET_START_ADDRESS + index] = fontset[index];
   }

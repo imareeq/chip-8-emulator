@@ -1,6 +1,7 @@
 BasedOnStyle: Google
 ColumnLimit: 120
 PackConstructorInitializers: Never
+BreakConstructorInitializers: BeforeComma
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
 BinPackParameters: false
 BinPackArguments: false
