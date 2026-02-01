@@ -1,4 +1,4 @@
-#include <platform.h>
+#include <platform.hpp>
 
 namespace {
 auto check_quit_event(SDL_Event& event) -> bool {
@@ -10,7 +10,9 @@ Platform::Platform(std::string title, int window_height, int window_width, int t
     : window{SDL_CreateWindow(title.data(), window_width, window_height, SDL_WINDOW_RESIZABLE)}
     , renderer{SDL_CreateRenderer(window.get(), nullptr)}
     , texture{SDL_CreateTexture(
-          renderer.get(), SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, texture_width, texture_height)} {}
+          renderer.get(), SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, texture_width, texture_height)} {
+  SDL_SetTextureScaleMode(texture.get(), SDL_SCALEMODE_NEAREST);
+}
 
 auto Platform::update(const std::span<const uint32_t> buffer, int pitch) -> void {
   SDL_UpdateTexture(texture.get(), nullptr, buffer.data(), pitch);

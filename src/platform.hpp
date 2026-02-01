@@ -4,7 +4,7 @@
 #include <span>
 #include <string>
 
-#include "chip_8.h"
+#include "chip_8.hpp"
 
 class Platform {
  private:

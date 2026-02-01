@@ -1,7 +1,7 @@
 #include <chrono>
 #include <iostream>
 
-#include "platform.h"
+#include "platform.hpp"
 
 #define DISPLAY_WIDTH 64
 #define DISPLAY_HEIGHT 32

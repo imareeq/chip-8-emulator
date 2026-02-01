@@ -1,14 +1,15 @@
-#include "chip_8.h"
+#include "chip_8.hpp"
 
 #include <chrono>
 #include <fstream>
-#include <ranges>
+#include <iostream>
+#include <numeric>
 namespace c8 {
 
 Chip_8::Chip_8()
     : random_generator(static_cast<unsigned int>(std::chrono::system_clock::now().time_since_epoch().count()))
     , random_byte(0u, 255u) {
-  for (const auto& index : std::views::iota(0u, FONTSET_SIZE)) {
+  for (auto index = 0u; index < FONTSET_SIZE; ++index) {
     memory[FONTSET_START_ADDRESS + index] = fontset[index];
   }
 
@@ -29,7 +30,7 @@ Chip_8::Chip_8()
   opcode_table[0xE] = &Chip_8::table_E;
   opcode_table[0xF] = &Chip_8::table_F;
 
-  for (const auto& index : std::views::iota(0u, 0xEu + 1u)) {
+  for (auto index = 0u; index <= 0xEu; ++index) {
     opcode_table_0[index] = &Chip_8::opcode_null;
     opcode_table_8[index] = &Chip_8::opcode_null;
     opcode_table_E[index] = &Chip_8::opcode_null;
@@ -51,7 +52,7 @@ Chip_8::Chip_8()
   opcode_table_E[0x1] = &Chip_8::op_EXA1;
   opcode_table_E[0xE] = &Chip_8::op_EX9E;
 
-  for (const auto& index : std::views::iota(0u, 0x65u + 1u)) {
+  for (auto index = 0u; index <= 0x65u; ++index) {
     opcode_table_F[index] = &Chip_8::opcode_null;
   }
 
@@ -72,23 +73,23 @@ auto Chip_8::load_rom(const std::string file_path) -> void {
   if (file.is_open()) {
     auto size = file.tellg();
     auto buffer = std::string{};
-    buffer.reserve(size);
+    buffer.reserve(static_cast<size_t>(size));
     file.seekg(0);
 
     file.read(buffer.data(), size);
     file.close();
 
-    for (const auto& i : std::views::iota(0, size)) {
-      memory[ROM_START_ADDRESS + i] = buffer[i];
+    for (auto index = 0u; index < size; ++index) {
+      memory[ROM_START_ADDRESS + index] = static_cast<uint8_t>(buffer[index]);
     }
   } else {
-    memory[ROM_START_ADDRESS] = 0x00;
-    memory[ROM_START_ADDRESS + 1] = 0xEE;
+    std::cerr << "Invalid file path" << std::endl;
+    std::exit(EXIT_FAILURE);
   }
 }
 
 auto Chip_8::cycle() -> void {
-  opcode = (memory[program_counter] << 8u) | memory[program_counter + 1];
+  opcode = static_cast<uint16_t>((memory[program_counter] << 8u) | memory[program_counter + 1]);
   program_counter += 2;
 
   std::invoke(opcode_table[(opcode & OPCODE_MASK) >> OPCODE_SHIFT], this);
@@ -190,6 +191,7 @@ auto Chip_8::op_8XY4() -> void {
   const uint16_t sum = registers[VX] + registers[VY];
 
   registers[VF_ADDRESS] = sum > REGISTER_MAX_VALUE ? 1 : 0;
+  registers[VX] = sum & 0xFFu;
 }
 
 auto Chip_8::op_8XY5() -> void {
@@ -261,9 +263,9 @@ auto Chip_8::op_DXYN() -> void {
 
   registers[VF_ADDRESS] = 0;
 
-  for (const auto& row : std::views::iota(0u, height)) {
+  for (auto row = 0u; row < height; ++row) {
     const auto sprite_byte = memory[index_register + row];
-    for (const auto& col : std::views::iota(0u, SPRITE_WIDTH)) {
+    for (auto col = 0u; col < SPRITE_WIDTH; ++col) {
       const auto sprite_pixel = static_cast<uint8_t>(sprite_byte & (MSB_MASK >> col));
       auto& screen_pixel = display_memory[(y_pos + row) * DISPLAY_WIDTH + (x_pos + col)];
 
@@ -304,7 +306,7 @@ auto Chip_8::op_FX07() -> void {
 auto Chip_8::op_FX0A() -> void {
   const auto VX = get_vx();
 
-  for (const auto& index : std::views::iota(0u, 16u)) {
+  for (auto index = 0u; index < 16u; ++index) {
     if (input_keys[index]) {
       registers[VX] = static_cast<uint8_t>(index);
       return;
@@ -352,16 +354,16 @@ auto Chip_8::op_FX33() -> void {
 auto Chip_8::op_FX55() -> void {
   const auto VX = get_vx();
 
-  for (const auto& i : std::views::iota(0u, VX + 1u)) {
-    memory[index_register + i] = registers[i];
+  for (auto index = 0u; index <= VX; ++index) {
+    memory[index_register + index] = registers[index];
   }
 }
 
 auto Chip_8::op_FX65() -> void {
   const auto VX = get_vx();
 
-  for (const auto& i : std::views::iota(0u, VX + 1u)) {
-    registers[i] = memory[index_register + i];
+  for (auto index = 0u; index <= VX; ++index) {
+    registers[index] = memory[index_register + index];
   }
 }
 
