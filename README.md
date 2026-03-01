@@ -19,6 +19,13 @@ While the guide I followed did contain the code implementations, I found myself 
 To run the program in your device, first ensure that you have a [C++ Compiler](https://code.visualstudio.com/docs/languages/cpp) (note: while this is a tutorial for vscode, installing the compiler for any other editor should follow the same process) and [CMake](https://cmake.org/download/) installed on your system.
 
 Once you have cloned the repository, navigate to the root directory and run `cmake -B build`. This will generate the build files required for the project. Once that is done, navigate to the `build` directory and run `make` to compile. Once compiled, running `./chip8_emulator <Scale> <Delay> <ROM>` will run the emulator.
-> **_NOTE:_**  if you are on windows, you may need to copy the `.dll` files for SDL into the same directory as your executeble (inside `build/`).
 
 Please ensure that the file you use is a `.ch8` file. You can find an archive of files to test [here](https://github.com/dmatlack/chip8/tree/master/roms/games). Two `.ch8` files are already provided in the root directory.
+
+## Running Examples
+
+### Test Opcode File
+![Test opcode file](assets/test_opcode_proof.png)
+
+### Tetris
+![Tetris opcode file](assets/tetris_proof.gif)
