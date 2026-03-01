@@ -63,3 +63,11 @@ target_compile_options(chip_8 PRIVATE ${COMPILE_OPTS})
 target_compile_options(chip8_emulator PRIVATE ${COMPILE_OPTS})
 
 target_link_libraries(chip8_emulator PRIVATE chip_8)
+
+if(MSVC OR WIN32)
+    add_custom_command(TARGET chip8_emulator POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:SDL3::SDL3>
+        $<TARGET_FILE_DIR:chip8_emulator>
+    )
+endif()
