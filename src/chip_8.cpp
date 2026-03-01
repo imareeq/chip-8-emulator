@@ -73,7 +73,7 @@ auto Chip_8::load_rom(const std::string file_path) -> void {
   if (file.is_open()) {
     auto size = file.tellg();
     auto buffer = std::string{};
-    buffer.reserve(static_cast<size_t>(size));
+    buffer.resize(static_cast<size_t>(size));
     file.seekg(0);
 
     file.read(buffer.data(), size);
@@ -267,7 +267,8 @@ auto Chip_8::op_DXYN() -> void {
     const auto sprite_byte = memory[index_register + row];
     for (auto col = 0u; col < SPRITE_WIDTH; ++col) {
       const auto sprite_pixel = static_cast<uint8_t>(sprite_byte & (MSB_MASK >> col));
-      auto& screen_pixel = display_memory[(y_pos + row) * DISPLAY_WIDTH + (x_pos + col)];
+      auto& screen_pixel =
+          display_memory[((y_pos + row) % DISPLAY_HEIGHT) * DISPLAY_WIDTH + ((x_pos + col) % DISPLAY_WIDTH)];
 
       if (sprite_pixel) {
         if (screen_pixel == PIXEL_ON_VAL) {

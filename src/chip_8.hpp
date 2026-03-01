@@ -139,5 +139,4 @@ class Chip_8 {
   auto op_FX65() -> void;  // LD VX, [I]
 };
 
-// non member funcs
 }  // namespace c8

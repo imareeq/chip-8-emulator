@@ -1,7 +1,19 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": []
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch Chip_8",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/chip8_emulator.exe",
+      "args": ["10", "3", "../tetris_opcode.ch8"],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/build",
+      "environment": [],
+      "console": "externalTerminal"
+    }
+  ]
 }
