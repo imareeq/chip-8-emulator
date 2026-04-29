@@ -216,7 +216,7 @@ auto Chip_8::op_8XY7() -> void {
 
   registers[VF_ADDRESS] = registers[VY] > registers[VX] ? 1 : 0;
 
-  registers[VX] = registers[VY] = registers[VX];
+  registers[VX] = registers[VY] - registers[VX];
 }
 
 auto Chip_8::op_8XYE() -> void {
